@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Budget</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0c1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<script src="xlsx.full.min.js"></script>
+<style>
+:root{--bg:#0c1220;--card:rgba(12,18,32,.86);--tx:#e8f0ff;--mu:#9fb0c9;--bd:rgba(150,180,230,.24);--ac:#6ee7b7;--neg:#ff8a80;--pos:#5eea9a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{background:#04060d}
+#sky{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:radial-gradient(ellipse at 18% 28%,rgba(96,52,170,.38),transparent 55%),radial-gradient(ellipse at 82% 68%,rgba(22,90,160,.36),transparent 55%),radial-gradient(ellipse at 50% 110%,#10243f 0%,#060a16 55%,#02030a 100%)}
+#cv{position:absolute;inset:0;width:100%;height:100%}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 28% 62%,#cfe,transparent),radial-gradient(1.5px 1.5px at 44% 30%,#fff,transparent),radial-gradient(1px 1px at 63% 12%,#fff,transparent),radial-gradient(1px 1px at 78% 48%,#dff,transparent),radial-gradient(1.5px 1.5px at 90% 22%,#fff,transparent),radial-gradient(1px 1px at 8% 80%,#fff,transparent),radial-gradient(1px 1px at 52% 85%,#fff,transparent),radial-gradient(1px 1px at 95% 75%,#fff,transparent);animation:tw 6s ease-in-out infinite alternate}
+.au{position:absolute;left:-25%;width:150%;border-radius:50%;filter:blur(46px);mix-blend-mode:screen;opacity:.6}
+.a1{top:-5%;height:45%;background:linear-gradient(90deg,transparent 5%,#19f29a 35%,#2dd4bf 55%,transparent 90%);animation:dr 10s ease-in-out infinite alternate}
+.a2{top:12%;height:38%;background:linear-gradient(90deg,transparent 10%,#7c3aed 40%,#22d3ee 65%,transparent 95%);animation:dr 14s ease-in-out -5s infinite alternate-reverse;opacity:.45}
+.a3{top:25%;height:30%;background:linear-gradient(90deg,transparent 0%,#34d399 30%,#a78bfa 60%,transparent 100%);animation:dr 18s ease-in-out -9s infinite alternate;opacity:.35}
+.hal{position:absolute;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#ff4d3d 0 35%,#7a0d05 70%);box-shadow:0 0 14px 3px rgba(255,60,40,.55);animation:hal 4s ease-in-out infinite}
+@keyframes dr{from{transform:translateX(-20%) skewX(-14deg) scaleY(.75)}to{transform:translateX(20%) skewX(14deg) scaleY(1.25)}}
+@keyframes tw{from{opacity:.55}to{opacity:1}}
+@keyframes hal{50%{opacity:.45}}
+.card{backdrop-filter:blur(8px)}
+.au{animation:none!important}
+@media print{:root:root{--bg:#fff;--card:#fff;--tx:#000;--mu:#555;--bd:#ccc}#sky{display:none}html{background:#fff}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:transparent;color:var(--tx);font:15px/1.4 Arial,Helvetica,sans-serif}
+main{max-width:1340px;margin:0 auto;padding:8px}
+h1{font-size:20px;margin:4px 0}h2{font-size:16px;margin:12px 0 4px}
+#st{color:var(--mu);font-size:12px;min-height:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:4px 6px;margin:4px 0}
+.hd{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row{display:flex;gap:3px;margin:1px 0;align-items:center}
+input,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:1px 6px;min-width:0;font-size:14px}
+.row input{flex:0 1 150px}.row input.a,.hd input.a{flex:0 0 112px;width:112px;text-align:right}.row input.s{flex:0 0 70px}
+.rem{margin-left:auto;font-weight:700;font-size:17px}
+.neg{color:var(--neg)}.pos{color:var(--pos)}
+button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:6px;padding:5px 10px;cursor:pointer}
+button.x{color:var(--mu);padding:0 6px;font-size:13px}button.add{color:var(--ac);margin-top:2px;padding:1px 8px;font-size:13px}
+.tot{display:flex;justify-content:space-between;font-weight:700;border-top:1px solid var(--bd);margin-top:3px;padding-top:2px}
+textarea{width:100%;min-height:60px;box-sizing:border-box}
+#app>.card,#app>textarea{max-width:410px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:4px 14px;align-items:start}.sec{min-width:0}.sec .card{max-width:410px}.sec textarea{width:300px;max-width:100%}
+.mrow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}.mrow .card{flex:1 1 380px;max-width:410px;margin:4px 0}
+.mh{color:var(--mu);font-size:13px;margin:10px 0 0}
+.mvb{display:inline-flex;flex:0 0 auto;border:1px solid var(--bd);border-radius:6px;overflow:hidden}.mvb button{border:0;border-radius:0;padding:0 8px;height:22px;display:flex;align-items:center;background:var(--card);color:var(--tx)}.mvb button+button{border-left:1px solid var(--bd)}.mvb button:hover:not(:disabled){background:rgba(110,231,183,.22);color:var(--ac)}.mvb button:disabled{opacity:.25;cursor:default}
+.grip{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:18px;height:22px;cursor:grab;color:var(--mu);touch-action:none;user-select:none;-webkit-user-select:none}.grip:hover{color:var(--ac)}
+.row.drag{position:relative;z-index:5;opacity:.9;cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.55)}.row.dtop{box-shadow:0 -2px 0 var(--ac)}.row.dbot{box-shadow:0 2px 0 var(--ac)}
+#ub,#bk,#ex,#im{font-size:13px;margin-left:10px;vertical-align:middle}#ub{margin-left:12px}#ub:disabled{opacity:.4;cursor:default}
+.div{border:0;height:2px;margin:22px 0 8px;background:linear-gradient(90deg,transparent,#6ee7b7,#a78bfa,transparent);opacity:.75}
+.yel input{background:rgba(250,204,21,.55)}.grn input{background:rgba(34,197,94,.55)}
+@media print{#ub,#bk,#ex,#im{display:none}.grip{display:none}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}button{display:none}.card{break-inside:avoid}}
+</style></head><body><div id="sky"><canvas id="cv"></canvas><i class="hal"></i></div><main>
+<h1>Budget<button id="ub" type="button" disabled>↶ Undo</button><button id="bk" type="button" title="Download an Excel copy">↓ Excel</button><button id="ex" type="button" title="Save all data to a file you can restore later">⇩ Export</button><button id="im" type="button" title="Load data from an exported file">⇧ Import</button><input id="imf" type="file" accept=".json,application/json" hidden></h1><div id="st">Loading…</div><div id="app"></div>
+</main>
+<script>
+let S=null,ref=null,timer=null,calc=[],hist=[],last=null,lastT=0,showClosed=false;const ub=document.getElementById('ub');
+const num=v=>v===''||v==null||isNaN(+v)?0:+v;
+const fmt=n=>n.toLocaleString('en-US',{style:'currency',currency:'USD'});
+const empty=()=>({periods:[],monthly:[],balances:[],other:[],subs:[],notes:''});
+const norm=d=>Object.assign(empty(),JSON.parse(JSON.stringify(d||{})));
+function h(t,p={},...k){const e=document.createElement(t);for(const x in p){if(x==='class')e.className=p[x];else if(x.startsWith('on'))e.addEventListener(x.slice(2),p[x]);else if(x in e)e[x]=p[x];else e.setAttribute(x,p[x]);}for(const c of k.flat())if(c!=null)e.append(c);return e}
+function status(t){document.getElementById('st').textContent=t}
+function copyP(p){const c=JSON.parse(JSON.stringify(p));c.closed=false;c.bills.forEach(b=>b.s='');if(p.date){const d=new Date(p.date+'T12:00:00');d.setDate(d.getDate()+14);c.date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}S.periods.push(c);S.periods.sort((a,b)=>(a.date||'').localeCompare(b.date||''));changed();render()}
+async function backup(){
+ const rows=[['Date','Paycheck','Bill','Amount','Status','Closed']];
+ S.periods.forEach(p=>{p.bills.forEach((b,j)=>rows.push([p.date,j?'':p.pay,b.n,b.a,b.s==='d'?'Deducted':b.s==='p'?'Pending':'',p.closed&&!j?'Yes':'']));rows.push([p.date,'','Left after bills',num(p.pay)-sum(p.bills),'','']);rows.push([])});
+ const L=(k,hd,keys)=>[hd,...S[k].map(r=>keys.map(x=>r[x]==null?'':r[x]))];
+ const sheets={'Pay periods':rows,'Monthly bills':L('monthly',['Bill','Amount','Due'],['n','a','due']),'Balances':L('balances',['Account','Balance'],['n','a']),'Other balances':L('other',['Account','Balance'],['n','a']),'Subscriptions':L('subs',['Name','Amount','Due'],['n','a','due']),'Notes':[['Notes'],[S.notes||'']]};
+ let data,ext;
+ if(typeof XLSX!=='undefined'){const wb=XLSX.utils.book_new();for(const k in sheets)XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sheets[k]),k);data=XLSX.write(wb,{bookType:'xlsx',type:'array'});ext='.xlsx'}
+ else{data=Object.keys(sheets).map(k=>k+'\n'+sheets[k].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n')).join('\n\n');ext='.csv'}
+ try{dl('Budget-'+today()+ext,data);status('Excel file downloaded')}catch(e){status('Download failed')}
+}
+const today=()=>new Date().toISOString().slice(0,10);
+function dl(name,data){const b=new Blob([data],{type:'application/octet-stream'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
+function exportData(){try{dl('Budget-data-'+today()+'.json',JSON.stringify({app:'budget',version:1,saved:new Date().toISOString(),data:S},null,1));status('Data file downloaded. Keep it somewhere safe.')}catch(e){status('Export failed')}}
+function importData(file){const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result),d=j&&j.data?j.data:j;if(!d||!Array.isArray(d.periods))throw 0;
+  if(!confirm('Replace everything in the app with the data from this file? (You can press Undo right after.)'))return;S=norm(d);changed();render()}catch(e){alert('That file is not a Budget data file.')}};r.readAsText(file)}
+function track(){const cur=JSON.stringify(S);if(cur===last)return;const now=Date.now();if(now-lastT>1200||!hist.length)hist.push(last);lastT=now;last=cur;if(hist.length>60)hist.shift();ub.disabled=!hist.length}
+function undo(){if(!hist.length)return;S=JSON.parse(hist.pop());last=JSON.stringify(S);lastT=0;ub.disabled=!hist.length;render();status('Saving…');clearTimeout(timer);timer=setTimeout(save,400)}
+function changed(){track();calc.forEach(f=>f());status('Saving…');clearTimeout(timer);timer=setTimeout(save,700)}
+const KEY='budget-app-v1';
+async function save(){timer=null;try{localStorage.setItem(KEY,JSON.stringify(S));status('Saved on this device')}catch(e){status('Could not save. Use Export to keep a copy.')}}
+const money=v=>v==null?'':'$'+(+v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function inp(o,k,ph,isNum,cls){const e=h('input',{class:cls||'',placeholder:ph,type:'text'});
+ const show=()=>{e.value=isNum?money(o[k]):(o[k]==null?'':o[k])};show();
+ if(isNum){e.inputMode='decimal';e.addEventListener('focus',()=>{e.value=o[k]==null?'':o[k]});e.addEventListener('blur',show)}
+ e.addEventListener('input',()=>{if(isNum){const t=e.value.replace(/[$,\s]/g,'');o[k]=t===''||isNaN(+t)?null:+t}else o[k]=e.value;changed()});return e}
+const sum=a=>a.reduce((t,x)=>t+num(x.a),0);
+function mv(a,i,d){const j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];changed();render()}
+function mvb(a,i){const w=h('span',{class:'mvb'}),u=h('button',{type:'button',title:'Move up',disabled:i===0,onclick:()=>mv(a,i,-1)}),d=h('button',{type:'button',title:'Move down',disabled:i===a.length-1,onclick:()=>mv(a,i,1)});
+ u.innerHTML='<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+ d.innerHTML='<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+ w.append(u,d);return w}
+function grip(a,i){const g=h('span',{class:'grip',title:'Drag to reorder'});
+ g.innerHTML='<svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor"><circle cx="4" cy="3" r="1.2"/><circle cx="8" cy="3" r="1.2"/><circle cx="4" cy="7" r="1.2"/><circle cx="8" cy="7" r="1.2"/><circle cx="4" cy="11" r="1.2"/><circle cx="8" cy="11" r="1.2"/></svg>';
+ g.addEventListener('pointerdown',e=>{if(e.button>0)return;e.preventDefault();const row=g.closest('.row'),rows=[...row.parentNode.children].filter(r=>r.classList.contains('row')),y0=e.clientY;let t=i;g.setPointerCapture(e.pointerId);row.classList.add('drag');
+  const clr=()=>rows.forEach(r=>r.classList.remove('dtop','dbot'));
+  const mm=ev=>{row.style.transform='translateY('+(ev.clientY-y0)+'px)';const oth=rows.filter(r=>r!==row);t=oth.filter(r=>{const b=r.getBoundingClientRect();return b.top+b.height/2<ev.clientY}).length;clr();if(oth.length){if(t<oth.length)oth[t].classList.add('dtop');else oth[oth.length-1].classList.add('dbot')}};
+  const end=ev=>{g.removeEventListener('pointermove',mm);g.removeEventListener('pointerup',end);g.removeEventListener('pointercancel',end);row.classList.remove('drag');row.style.transform='';clr();if(ev.type==='pointerup'&&t!==i){const[x]=a.splice(i,1);a.splice(t,0,x);changed();render()}};
+  g.addEventListener('pointermove',mm);g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end)});
+ return g}
+function btn(t,f,c){return h('button',{class:c||'',onclick:f,type:'button'},t)}
+function period(p,i){
+ const rem=h('span',{class:'rem'}),info=h('span'),box=h('div',{class:'card'});
+ const date=inp(p,'date','Date',false);date.type='date';date.addEventListener('change',()=>{S.periods.sort((a,b)=>(a.date||'').localeCompare(b.date||''));render()});
+ const pay=inp(p,'pay','Paycheck',true,'a');
+ calc.push(()=>{const r=num(p.pay)-sum(p.bills);rem.textContent='Left: '+fmt(r);rem.className='rem '+(r<0?'neg':'pos');info.textContent='Pending '+fmt(sum(p.bills.filter(b=>b.s==='p')))+' · Deducted '+fmt(sum(p.bills.filter(b=>b.s==='d')))});
+ if(p.closed)box.style.opacity=.6;
+ box.append(h('div',{class:'hd'},date,pay,...(p.closed?[btn('Reopen',()=>{p.closed=false;changed();render()},'x'),btn('Delete',()=>{if(confirm('Permanently delete this pay period?')){S.periods.splice(i,1);changed();render()}},'x')]:[btn('Copy',()=>copyP(p),'x'),btn('✕ Close',()=>{p.closed=true;changed();render()},'x')])));
+ p.bills.forEach((b,j)=>{const row=h('div',{class:'row'}),sb=h('button',{type:'button',class:'x',title:'Tap to change status'});
+  const paint=()=>{row.className='row '+(b.s==='p'?'yel':b.s==='d'?'grn':'');sb.textContent=b.s==='d'?'✓':b.s==='p'?'…':'○'};
+  sb.addEventListener('click',()=>{b.s=b.s==='p'?'d':b.s==='d'?'':'p';paint();changed()});paint();
+  row.append(grip(p.bills,j),sb,inp(b,'n','Bill',false),inp(b,'a','Amount',true,'a'),btn('✕',()=>{p.bills.splice(j,1);changed();render()},'x'));box.append(row)});
+ box.append(btn('+ Bill',()=>{p.bills.push({n:'',a:null,s:''});render()},'add'),h('div',{class:'tot'},info,rem));
+ return box}
+function list(title,key,cols,total){
+ const box=h('div',{class:'card'});
+ S[key].forEach((r,i)=>box.append(h('div',{class:'row'},grip(S[key],i),...cols.map(c=>inp(r,c.k,c.ph,c.num,c.num?'a':(c.s?'s':''))),
+  btn('✕',()=>{S[key].splice(i,1);changed();render()},'x'))));
+ box.append(btn('+ Add',()=>{const r={};cols.forEach(c=>r[c.k]=c.num?null:'');S[key].push(r);render()},'add'));
+ if(total){const t=h('span');box.append(h('div',{class:'tot'},'Total',t));calc.push(()=>t.textContent=fmt(sum(S[key])))}
+ return h('div',{class:'sec'},h('h2',{},title),box)}
+function render(){
+ calc=[];const app=document.getElementById('app');app.replaceChildren();
+ app.append(h('h2',{},'Pay periods'));
+ const g=[];S.periods.forEach((p,i)=>{if(p.closed&&!showClosed)return;const m=(p.date||'').slice(0,7);let r=g[g.length-1];if(!r||r.m!==m){r={m,els:[]};g.push(r)}r.els.push(period(p,i))});
+ g.forEach(r=>{const d=r.m?new Date(r.m+'-15'):null;app.append(h('div',{class:'mh'},d?d.toLocaleString('en-US',{month:'long',year:'numeric'}):'No date'),h('div',{class:'mrow'},...r.els))});
+ app.append(btn('+ Pay period',()=>{S.periods.push({date:'',pay:null,bills:[]});render()},'add'));
+ const nc=S.periods.filter(p=>p.closed).length;if(nc)app.append(' ',btn((showClosed?'Hide':'Show')+' closed ('+nc+')',()=>{showClosed=!showClosed;render()},'add'));
+ const ta=h('textarea',{value:S.notes||'',placeholder:'Notes'});ta.addEventListener('input',()=>{S.notes=ta.value;changed()});
+ app.append(h('hr',{class:'div'}));
+ app.append(h('div',{class:'grid'},list('Monthly bills','monthly',[{k:'n',ph:'Bill'},{k:'a',ph:'Amount',num:1},{k:'due',ph:'Due',s:1}],true),list('Balances','balances',[{k:'n',ph:'Account'},{k:'a',ph:'Balance',num:1}],true),list('Other balances','other',[{k:'n',ph:'Account'},{k:'a',ph:'Balance',num:1}],true),list('Subscriptions','subs',[{k:'n',ph:'Name'},{k:'a',ph:'Amount',num:1},{k:'due',ph:'Due',s:1}],false),h('div',{class:'sec'},h('h2',{},'Notes'),ta)));calc.forEach(f=>f())}
+S=empty();render();last=JSON.stringify(S);ub.onclick=undo;document.getElementById('bk').onclick=backup;
+const cv=document.getElementById('cv'),cx=cv.getContext('2d'),hal=document.querySelector('.hal');
+let W,H,stars=[],shoot=[],nextS=0;
+function fit(){const d=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);
+ stars=Array.from({length:Math.round(W*H/2300)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+.4,z:Math.random(),p:Math.random()*6.28,s:.5+Math.random()*1.8,c:Math.random()<.15?'180,200,255':Math.random()<.1?'255,220,190':'255,255,255'}))}
+addEventListener('resize',fit);fit();
+function sky(t){cx.clearRect(0,0,W,H);
+ for(const s of stars){s.x+=.06+s.z*.4;if(s.x>W+3)s.x=-3;const a=.7+.3*Math.abs(Math.sin(t/1000*s.s+s.p));cx.fillStyle='rgba('+s.c+','+a+')';cx.beginPath();cx.arc(s.x,s.y,s.r,0,6.283);cx.fill();if(s.r>1.5){cx.fillStyle='rgba('+s.c+','+a*.16+')';cx.beginPath();cx.arc(s.x,s.y,s.r*2.8,0,6.283);cx.fill()}}
+ if(t>nextS){const ang=.35+Math.random()*.4;shoot.push({x:Math.random()*W*.9,y:Math.random()*H*.4,vx:Math.cos(ang)*9,vy:Math.sin(ang)*9,l:0});nextS=t+1800+Math.random()*3500}
+ shoot=shoot.filter(m=>m.l<70);for(const m of shoot){m.x+=m.vx;m.y+=m.vy;m.l++;const f=1-m.l/70,tx=m.x-m.vx*7,ty=m.y-m.vy*7,g=cx.createLinearGradient(m.x,m.y,tx,ty);g.addColorStop(0,'rgba(255,255,255,'+f+')');g.addColorStop(1,'rgba(255,255,255,0)');cx.strokeStyle=g;cx.lineWidth=1.8;cx.beginPath();cx.moveTo(m.x,m.y);cx.lineTo(tx,ty);cx.stroke()}
+ if(hal)hal.style.opacity=.7+.3*Math.sin(t/640);requestAnimationFrame(sky)}
+requestAnimationFrame(sky);
+const SEED={};
+(function(){
+ let raw=null;try{raw=localStorage.getItem(KEY)}catch(e){}
+ let d=null;if(raw){try{d=JSON.parse(raw)}catch(e){}}
+ const first=!d;S=norm(d||SEED);last=JSON.stringify(S);hist=[];ub.disabled=true;render();
+ if(first){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}status('Welcome. Tap Import and choose your Budget data file, or start adding pay periods.')}else status('');
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+ addEventListener('storage',e=>{if(e.key!==KEY||timer||!e.newValue)return;try{S=norm(JSON.parse(e.newValue));last=JSON.stringify(S);hist=[];ub.disabled=true;render()}catch(x){}});
+ document.getElementById('ex').onclick=exportData;
+ const f=document.getElementById('imf');document.getElementById('im').onclick=()=>f.click();
+ f.onchange=()=>{if(f.files[0])importData(f.files[0]);f.value=''};
+ if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script></body></html>
