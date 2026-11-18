@@ -40,9 +40,10 @@ async function start() {
   ]);
   const app = initializeApp(CONFIG);
   const auth = A.getAuth(app);
+  // In-memory cache (the app already saves on the device) and auto long-polling for stricter browsers/networks.
   let db;
   try {
-    db = F.initializeFirestore(app, { localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }) });
+    db = F.initializeFirestore(app, { localCache: F.memoryLocalCache(), experimentalAutoDetectLongPolling: true });
   } catch (e) {
     db = F.getFirestore(app);
   }
@@ -82,16 +83,42 @@ async function start() {
     else push(local);
   }
 
+  function fail(msg) {
+    label('☁ Retry', msg + ' Tap to retry.');
+    B.status(msg + ' Your data is still saved on this device. Tap ☁ Retry.');
+  }
+
+  // Step 1: read the cloud copy once from the server, with a timeout so it never spins forever.
+  function connect() {
+    if (!user) return;
+    const myRef = ref;
+    label('☁ Syncing…', 'Signed in as ' + (user.email || 'you'));
+    B.status('Connecting to sync…');
+    let done = false;
+    const t = setTimeout(() => { if (!done && ref === myRef) { done = true; fail('Could not reach the sync server from this browser.'); } }, 15000);
+    F.getDocFromServer(ref).then(snap => {
+      clearTimeout(t);
+      if (ref !== myRef || ready) return;
+      done = true;
+      ready = true;
+      reconcile(snap.exists() ? snap.data().json : null);
+      label('☁ Synced', 'Signed in as ' + (user.email || 'you') + '. Tap to sign out.');
+      if (B.status && document.getElementById('st').textContent === 'Connecting to sync…') B.status('Synced');
+      listen();
+    }).catch(e => {
+      clearTimeout(t);
+      if (ref !== myRef || done) return;
+      done = true;
+      console.warn('Sync read failed', e);
+      fail('Sync error: ' + (e.code || e.message) + '.');
+    });
+  }
+
+  // Step 2: live updates from other devices.
   function listen() {
     unsub = F.onSnapshot(ref, { includeMetadataChanges: true }, snap => {
       if (snap.metadata.hasPendingWrites || snap.metadata.fromCache) return; // only trust what the server confirms
       const remote = snap.exists() ? snap.data().json : null;
-      if (!ready) {
-        ready = true;
-        reconcile(remote);
-        label('☁ Synced', 'Signed in as ' + (user.email || 'you') + '. Tap to sign out.');
-        return;
-      }
       if (remote == null || remote === B.get()) { if (remote != null) setMeta(user.uid, remote); return; }
       if (B.busy()) return;                    // an edit here is about to save and will win
       B.apply(JSON.parse(remote), false);      // change made on another device
@@ -99,8 +126,8 @@ async function start() {
       B.status('Updated from another device');
     }, e => {
       console.warn('Sync listen failed', e);
-      label('☁ Error', 'Sync error: ' + (e.code || e.message));
-      B.status('Sync error: ' + (e.code || 'unknown') + '. Your data is still saved on this device.');
+      ready = false;
+      fail('Sync error: ' + (e.code || e.message) + '.');
     });
   }
 
@@ -108,14 +135,14 @@ async function start() {
     if (unsub) { unsub(); unsub = null; }
     ready = false; user = u; ref = null;
     if (!u) { label('☁ Sign in', 'Sign in with Google to sync across devices'); return; }
-    label('☁ Syncing…', 'Signed in as ' + (u.email || 'you'));
     ref = F.doc(db, 'users', u.uid, 'budget', 'main');
-    listen();
+    connect();
   });
 
   A.getRedirectResult(auth).catch(() => {});
 
   btn.onclick = async () => {
+    if (user && !ready) { connect(); return; }
     if (user) {
       if (confirm('Sign out of sync on this device? Your data stays saved on this device.')) await A.signOut(auth);
       return;
