@@ -49,12 +49,12 @@ textarea{width:100%;min-height:60px;box-sizing:border-box}
 .mvb{display:inline-flex;flex:0 0 auto;border:1px solid var(--bd);border-radius:6px;overflow:hidden}.mvb button{border:0;border-radius:0;padding:0 8px;height:22px;display:flex;align-items:center;background:var(--card);color:var(--tx)}.mvb button+button{border-left:1px solid var(--bd)}.mvb button:hover:not(:disabled){background:rgba(110,231,183,.22);color:var(--ac)}.mvb button:disabled{opacity:.25;cursor:default}
 .grip{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:18px;height:22px;cursor:grab;color:var(--mu);touch-action:none;user-select:none;-webkit-user-select:none}.grip:hover{color:var(--ac)}
 .row.drag{position:relative;z-index:5;opacity:.9;cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.55)}.row.dtop{box-shadow:0 -2px 0 var(--ac)}.row.dbot{box-shadow:0 2px 0 var(--ac)}
-#ub,#bk,#ex,#im{font-size:13px;margin-left:10px;vertical-align:middle}#ub{margin-left:12px}#ub:disabled{opacity:.4;cursor:default}
+#ub,#bk,#ex,#im,#sy{font-size:13px;margin-left:10px;vertical-align:middle}#ub{margin-left:12px}#ub:disabled{opacity:.4;cursor:default}
 .div{border:0;height:2px;margin:22px 0 8px;background:linear-gradient(90deg,transparent,#6ee7b7,#a78bfa,transparent);opacity:.75}
 .yel input{background:rgba(250,204,21,.55)}.grn input{background:rgba(34,197,94,.55)}
-@media print{#ub,#bk,#ex,#im{display:none}.grip{display:none}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}button{display:none}.card{break-inside:avoid}}
+@media print{#ub,#bk,#ex,#im,#sy{display:none}.grip{display:none}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}button{display:none}.card{break-inside:avoid}}
 </style></head><body><div id="sky"><canvas id="cv"></canvas><i class="hal"></i></div><main>
-<h1>Budget<button id="ub" type="button" disabled>↶ Undo</button><button id="bk" type="button" title="Download an Excel copy">↓ Excel</button><button id="ex" type="button" title="Save all data to a file you can restore later">⇩ Export</button><button id="im" type="button" title="Load data from an exported file">⇧ Import</button><input id="imf" type="file" accept=".json,application/json" hidden></h1><div id="st">Loading…</div><div id="app"></div>
+<h1>Budget<button id="ub" type="button" disabled>↶ Undo</button><button id="bk" type="button" title="Download an Excel copy">↓ Excel</button><button id="ex" type="button" title="Save all data to a file you can restore later">⇩ Export</button><button id="im" type="button" title="Load data from an exported file">⇧ Import</button><button id="sy" type="button" title="Sign in to sync across devices">☁ Sync</button><input id="imf" type="file" accept=".json,application/json" hidden></h1><div id="st">Loading…</div><div id="app"></div>
 </main>
 <script>
 let S=null,ref=null,timer=null,calc=[],hist=[],last=null,lastT=0,showClosed=false;const ub=document.getElementById('ub');
@@ -84,7 +84,9 @@ function track(){const cur=JSON.stringify(S);if(cur===last)return;const now=Date
 function undo(){if(!hist.length)return;S=JSON.parse(hist.pop());last=JSON.stringify(S);lastT=0;ub.disabled=!hist.length;render();status('Saving…');clearTimeout(timer);timer=setTimeout(save,400)}
 function changed(){track();calc.forEach(f=>f());status('Saving…');clearTimeout(timer);timer=setTimeout(save,700)}
 const KEY='budget-app-v1';
-async function save(){timer=null;try{localStorage.setItem(KEY,JSON.stringify(S));status('Saved on this device')}catch(e){status('Could not save. Use Export to keep a copy.')}}
+async function save(){timer=null;try{localStorage.setItem(KEY,JSON.stringify(S));status('Saved on this device')}catch(e){status('Could not save. Use Export to keep a copy.')}if(window.cloudSave)window.cloudSave(JSON.stringify(S))}
+function applyData(d,keepUndo){const cur=JSON.stringify(S);if(keepUndo){hist.push(cur);ub.disabled=false}else{hist=[];ub.disabled=true}S=norm(d);last=JSON.stringify(S);try{localStorage.setItem(KEY,last)}catch(e){}render()}
+window.budget={get:()=>JSON.stringify(S),apply:applyData,busy:()=>!!timer,status,KEY};
 const money=v=>v==null?'':'$'+(+v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 function inp(o,k,ph,isNum,cls){const e=h('input',{class:cls||'',placeholder:ph,type:'text'});
  const show=()=>{e.value=isNum?money(o[k]):(o[k]==null?'':o[k])};show();
@@ -160,4 +162,4 @@ const SEED={};
  f.onchange=()=>{if(f.files[0])importData(f.files[0]);f.value=''};
  if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 })();
-</script></body></html>
+</script><script type="module" src="sync.js"></script></body></html>

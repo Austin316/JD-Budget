@@ -1,5 +1,5 @@
-const V='budget-v1';
-const FILES=['./','index.html','xlsx.full.min.js','manifest.webmanifest','icon-192.png','icon-512.png'];
+const V='budget-v2';
+const FILES=['./','index.html','xlsx.full.min.js','manifest.webmanifest','icon-192.png','icon-512.png','sync.js','firebase-config.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
