@@ -11,5 +11,11 @@
 //   appId: "..."
 // };
 // These values are meant to be public. Your data is protected by the rules in firestore.rules.
-// While this is null, the app works exactly as before (saved on this device only).
-export default null;
+export default {
+  apiKey: "AIzaSyCWwsP1bXepcX-qvKey4t2dBsHfPSgRDdU",
+  authDomain: "jd--budget.firebaseapp.com",
+  projectId: "jd--budget",
+  storageBucket: "jd--budget.firebasestorage.app",
+  messagingSenderId: "941442228001",
+  appId: "1:941442228001:web:7438c980510290ce73e860"
+};
